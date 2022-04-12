@@ -1,29 +1,22 @@
 <template>
-   <div>
-     Welcome to the simple mapcreate tool;
-   </div>
-   <div>
-     This tool can create edit maps and allow you to easily download them
-   </div> 
+   <welcome-page/> 
 </template>
 
 <script lang="ts">
 import { defineComponent } from 'vue';
+import WelcomePage from './components/WelcomePage.vue'
 
 export default defineComponent({
   name: 'App',
   components: {
+    WelcomePage
   }
 });
 </script>
 
 <style>
 #app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
 }
 </style>
