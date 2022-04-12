@@ -1,6 +1,6 @@
 <template>
-  <welcome-page v-if="page === 'welcome'" @create-map = "goToMap"/> 
-  <show-map v-if="page ==='map'"/>
+  <welcome-page v-if="page === 'welcome'" @create-map = "goToMap('map')"/> 
+  <show-map v-if="page ==='map'" @exit-map = "goToMap('welcome')" />
 </template>
 
 <script setup lang="ts">
@@ -8,10 +8,12 @@ import { ref } from '@vue/reactivity'
 import WelcomePage from './components/WelcomePage.vue'
 import ShowMap from './components/ShowMap.vue'
 
-const page = ref<'welcome' | 'map'>('welcome')
+type pageType = 'welcome' | 'map';
 
-function goToMap(){
-  page.value = "map"
+const page = ref<pageType>('welcome')
+
+function goToMap(value: pageType){
+  page.value = value
 }
 
 
