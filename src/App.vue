@@ -1,6 +1,8 @@
 <template>
   <welcome-page v-if="page === 'welcome'" @create-map = "goToMap('map')"/> 
-  <show-map v-if="page ==='map'" @exit-map = "goToMap('welcome')" />
+  <keep-alive>
+    <show-map v-if="page ==='map'" @exit-map = "goToMap('welcome')" />
+  </keep-alive>
 </template>
 
 <script setup lang="ts">
