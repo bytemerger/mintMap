@@ -12,19 +12,17 @@
       This tool can create, edit and allow you to easily download maps... 
     </div>
     <div>
-      <button class="border-2 border-red-300 py-2 px-6 mt-7 hover:bg-red-50">Create</button>
+      <button class="border-2 border-red-300 py-2 px-6 mt-7 hover:bg-red-50" @click="emit('createMap')">Create</button>
     </div>
    </div> 
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue';
+<script setup lang="ts">
+import { defineEmits } from "vue"
 
-export default defineComponent({
-  name: 'WelcomePage',
-  components: {
-  }
-});
+const emit = defineEmits<{
+  (e: 'createMap'): void
+}>()
 </script>
 
 <style>

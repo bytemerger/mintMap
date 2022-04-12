@@ -1,17 +1,20 @@
 <template>
-   <welcome-page/> 
+  <welcome-page v-if="page === 'welcome'" @create-map = "goToMap"/> 
+  <show-map v-if="page ==='map'"/>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue';
+<script setup lang="ts">
+import { ref } from '@vue/reactivity'
 import WelcomePage from './components/WelcomePage.vue'
+import ShowMap from './components/ShowMap.vue'
 
-export default defineComponent({
-  name: 'App',
-  components: {
-    WelcomePage
-  }
-});
+const page = ref<'welcome' | 'map'>('welcome')
+
+function goToMap(){
+  page.value = "map"
+}
+
+
 </script>
 
 <style>
