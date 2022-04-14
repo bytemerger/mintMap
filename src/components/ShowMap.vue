@@ -1,6 +1,6 @@
 <template>
-    <div class="flex justify-between">
-        <div class="ml-7 flex flex-col items-center w-10">
+    <div class="flex justify-between z-10 relative pointer-events-none">
+        <div class="ml-7 flex flex-col items-center w-10 pointer-events-auto">
             <div>
                 <button class="border-2 border-gray-600 py-1 px-3 mt-7 hover:bg-red-300 bg-slate-300" @click="emit('exitMap')">Exit</button>
             </div>
@@ -11,7 +11,7 @@
         </div>
         <div class="mr-7 mt-4 flex flex-col items-end">
             <!-- Search box -->
-            <div>
+            <div class="pointer-events-auto">
                 <input type="text" class="border-red-400 border-2 focus:outline-none py-1 px-1 focus:px-3 w-14 text-xs rounded focus:w-full focus:text-base peer" placeholder="Search ..." v-model="searchQuery"/>
                 <div class="w-13 hidden peer-focus:block">
                     <div class="bg-white border mt-2">
@@ -23,7 +23,7 @@
                 </div>
             </div>
             <!-- Other tools-->
-            <div class="flex flex-col mt-32">
+            <div class="flex flex-col mt-32 pointer-events-auto">
                 <div class="flex flex-row-reverse">
                     <div>
                         <button class="border-2 border-gray-600 py-1 px-2 hover:bg-red-300 bg-slate-300 text-xs" @click="()=>showTools === 'layers' ? showTools = null : showTools = 'layers'">Layers</button>
@@ -61,7 +61,7 @@
             </div>
         </div>
     </div>
-    <div v-if="mapSize.width" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 border border-gray-600" :style="{'width': `${mapSize.width}px`, 'height': `${mapSize.height}px`}">
+    <div v-if="mapSize.width" class="absolute z-10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 border border-gray-600 pointer-events-none" :style="{'width': `${mapSize.width}px`, 'height': `${mapSize.height}px`}">
         
     </div>
     <div id="map" class="top-0 absolute bottom-0 w-full"></div>
@@ -235,5 +235,5 @@ function setSize(type: 'width' | 'height', value: number){
 }
 </script>
 <style scoped>
-#map { position: absolute; top: 0; bottom: 0; width: 100%; z-index: -10; }
+#map { position: absolute; top: 0; bottom: 0; width: 100%; }
 </style>
