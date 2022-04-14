@@ -10,6 +10,7 @@
             </div>
         </div>
         <div class="mr-7 mt-4 flex flex-col items-end">
+            <!-- Search box -->
             <div>
                 <input type="text" class="border-red-400 border-2 focus:outline-none py-1 px-1 focus:px-3 w-14 text-xs rounded focus:w-full focus:text-base peer" placeholder="Search ..." v-model="searchQuery"/>
                 <div class="w-13 hidden peer-focus:block">
@@ -21,28 +22,52 @@
                     <hr>
                 </div>
             </div>
-            <div class="flex mt-32">
-                <div class="h-80 overflow-scroll bg-red-400 text-xs px-5" v-if="showLayers">
-                    <ul>
-                        <li v-for="(layerTypes, type) in sortedLayers" :key="type" class="group hover:font-medium hover:text-sm">{{type}}
-                            <ul class="hidden group-hover:block ml-4">
-                                <li v-for="layer in layerTypes" :key="layer.id" class="hover:font-bold cursor-pointer" @click="toggleLayer(layer.id)">
-                                    - {{layer.id}} | <span class="text-xs bg-green-400" v-if="layerState[layer.id]">show</span> <span v-else class="text-xs bg-red-700">hide</span>
-                                </li>
-                            </ul>
-                        </li>
-                    </ul>
+            <!-- Other tools-->
+            <div class="flex flex-col mt-32">
+                <div class="flex flex-row-reverse">
+                    <div>
+                        <button class="border-2 border-gray-600 py-1 px-2 hover:bg-red-300 bg-slate-300 text-xs" @click="()=>showTools === 'layers' ? showTools = null : showTools = 'layers'">Layers</button>
+                    </div>
+                    <div class="h-80 overflow-scroll bg-red-400 text-xs px-5" v-if="showTools === 'layers'">
+                        <ul>
+                            <li v-for="(layerTypes, type) in sortedLayers" :key="type" class="group hover:font-medium hover:text-sm">{{type}}
+                                <ul class="hidden group-hover:block ml-4">
+                                    <li v-for="layer in layerTypes" :key="layer.id" class="hover:font-bold cursor-pointer" @click="toggleLayer(layer.id)">
+                                        - {{layer.id}} | <span class="text-xs bg-green-400" v-if="layerState[layer.id]">show</span> <span v-else class="text-xs bg-red-700">hide</span>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
-                <div>
-                    <button class="border-2 border-gray-600 py-1 px-2 hover:bg-red-300 bg-slate-300 text-xs" @click="()=>showLayers = !showLayers">Layers</button>
+                <div class="mt-7 flex flex-row-reverse">
+                    <div class="ml-1">
+                        <button class="border-2 border-gray-600 py-1 px-2 hover:bg-red-300 bg-slate-300 text-xs" @click="()=>showTools === 'size' ? showTools = null : showTools = 'size'">Resize</button>
+                    </div>
+                    <div class="flex" v-if="showTools === 'size'">
+                        <div>
+                            <input type="number" placeholder="width" class="w-16" v-model="mapSize.width"/> 
+                        </div> 
+                        <div class="ml-3">
+                            <input type="number" placeholder="height" class="w-16" v-model="mapSize.height"/> 
+                        </div> 
+                    </div>
                 </div>
+                <!-- <div class="flex flex-col items-end">
+                    <div>
+                        <button class="border-2 border-gray-600 py-1 px-2 hover:bg-red-300 bg-slate-300 text-xs" @click="()=>showLayers = !showLayers">Layers</button>
+                    </div>
+                </div> -->
             </div>
         </div>
+    </div>
+    <div v-if="mapSize.width" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 border border-gray-600" :style="{'width': `${mapSize.width}px`, 'height': `${mapSize.height}px`}">
+        
     </div>
     <div id="map" class="top-0 absolute bottom-0 w-full"></div>
 </template>
 <script setup lang="ts">
-import { onMounted, reactive, watchEffect } from '@vue/runtime-core';
+import { onMounted, reactive, watch, watchEffect } from '@vue/runtime-core';
 import { computed, defineEmits, ref } from "vue"
 import mapboxgl,{ LngLatLike, Map, AnyLayer, Layer } from 'mapbox-gl';
 
@@ -53,7 +78,39 @@ const emit = defineEmits<{
 const loading = ref(true);
 let map : Map;
 const layers =  ref<Layer[]>();
-const showLayers = ref(false)
+const showTools = ref<'layers'| 'size' | 'add'| null>(null)
+const mapSize = reactive({
+    width: 0,
+    height: 0
+})
+
+// Watch the width change
+watch(
+  () => mapSize.width,
+  (newValue, oldValue) => {
+    if(isNaN(newValue)){
+        alert("please pass width in pixel")
+        mapSize.width = oldValue
+    }
+    if(newValue > window.screen.width){
+        alert("The set pixel is above you screen width")
+        mapSize.width = oldValue
+    }
+  }
+)
+watch(
+  () => mapSize.height,
+  (newValue, oldValue) => {
+    if(isNaN(newValue)){
+        alert("please pass height in pixel")
+        mapSize.height = oldValue
+    }
+    if(newValue > window.screen.height){
+        alert("The set pixel is above you screen width")
+        mapSize.height = oldValue
+    }
+  }
+)
 
 mapboxgl.accessToken = process.env.VUE_APP_MAPBOX_TOKEN;
 
@@ -154,6 +211,27 @@ function toggleLayer(layer: Layer['id']){
     const setAs = currentState ? 'visible' : 'none'
     map.setLayoutProperty(layer,'visibility',setAs)
     layerState[layer] = !currentState
+}
+
+function setSize(type: 'width' | 'height', value: number){
+    console.log(window.screen)
+    if(!isNaN(value)){
+        alert("please pass " + type + " in pixel")
+        return
+    }
+    if(type === 'width'){
+        if(value> window.screenX){
+            alert("The set pixel is above you screen width")
+            return
+        }
+    }
+    if(type === 'height'){
+        if(value> window.screenY){
+            alert("The set pixel is above you screen height")
+            return
+        }
+    }
+    mapSize[type] = value
 }
 </script>
 <style scoped>
