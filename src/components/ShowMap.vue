@@ -53,6 +53,37 @@
                         </div> 
                     </div>
                 </div>
+                <div class="mt-7 flex flex-row-reverse">
+                    <div class="ml-1">
+                        <button class="border-2 border-gray-600 py-1 px-2 hover:bg-red-300 bg-slate-300 text-xs" @click="()=>showTools === 'addText' | 'addIcon' ? showTools = null : showTools = 'addText'">Add</button>
+                    </div>
+                    <div class="flex flex-col bg-gray-500" v-if="(showTools === 'addText' || showTools === 'addIcon')">
+                        <div class="p-2 flex justify-between">
+                            <span @click="()=>showTools === 'addText' ? '' : showTools = 'addText'" class="bg-black text-white tex-xs p-1 cursor-pointer">Text</span>
+                            <span @click="()=>showTools === 'addIcon' ? '' : showTools = 'addIcon'" class="bg-black text-white tex-xs p-1 cursor-pointer">Icon</span>
+                        </div>
+                        <div v-if="showTools === 'addText'" class="flex flex-col">
+                            <div class="flex flex-col m-2">
+                                <input type="text" placeholder="text" v-model="textToAdd.text" class="border border-red-400"/> 
+                                <input type="number" placeholder="size in px" v-model="textToAdd.size" class="border border-red-400 my-2"/>
+                                <input type="text" placeholder="color" v-model="textToAdd.color" class="border border-red-400"/>
+                                <div class="mt-2">
+                                    <button @click="addText" class="border-2 border-gray-600 py-1 px-2 hover:bg-red-300 bg-slate-300 text-xs">Add</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div v-if="showTools === 'addIcon'" class="flex flex-col">
+                            <div class="m-2">
+                                <div class="flex">
+                                    <div  v-for="(icon, key) in icons" :key="key" class="h-9 w-9">
+                                        <img :src="icon" @click="addIcon(key)"/>
+                                    </div>
+                                </div>
+                                <div class="bg-black text-white tex-xs p-1 cursor-pointer" @click="addIcon('default')">Default</div>
+                            </div>
+                        </div> 
+                    </div>
+                </div>
                 <!-- <div class="flex flex-col items-end">
                     <div>
                         <button class="border-2 border-gray-600 py-1 px-2 hover:bg-red-300 bg-slate-300 text-xs" @click="()=>showLayers = !showLayers">Layers</button>
@@ -69,7 +100,8 @@
 <script setup lang="ts">
 import { onMounted, reactive, watch, watchEffect } from '@vue/runtime-core';
 import { computed, defineEmits, ref } from "vue"
-import mapboxgl,{ LngLatLike, Map, AnyLayer, Layer } from 'mapbox-gl';
+import mapboxgl,{ LngLatLike, Map, AnyLayer, Layer, Marker } from 'mapbox-gl';
+//import profileSvg from "../assets/icons/basic-home-svgrepo-com.svg";
 
 const emit = defineEmits<{
   (e: 'exitMap'): void
@@ -78,11 +110,16 @@ const emit = defineEmits<{
 const loading = ref(true);
 let map : Map;
 const layers =  ref<Layer[]>();
-const showTools = ref<'layers'| 'size' | 'add'| null>(null)
+const showTools = ref<'layers'| 'size' | 'addText'| 'addIcon' | null>(null)
 const mapSize = reactive({
     width: 0,
     height: 0
-})
+});
+const textToAdd = reactive({
+    text: '',
+    size: 12,
+    color: 'green'
+});
 
 // Watch the width change
 watch(
@@ -232,6 +269,76 @@ function setSize(type: 'width' | 'height', value: number){
         }
     }
     mapSize[type] = value
+}
+
+//Add ICON and TEXT
+const icons: { [key: string]: any } = {
+    "profileSvg": require("./../assets/icons/basic-profile-ui-svgrepo-com.svg"),
+    "touchSvg": require("../assets/icons/basic-touch-ui-svgrepo-com.svg"),
+    "homeSvg": require("../assets/icons/basic-home-svgrepo-com.svg")
+}
+function addText(){
+    if(textToAdd.text !== ""){
+        let text = document.createElement('span')
+        text.innerHTML = `<span class="text-xl text-[${textToAdd.size}px]" style="color:${textToAdd.color}">${textToAdd.text}</span>`
+        const deleteButton = document.createElement('div')
+        deleteButton.innerHTML = `<button class="bg-red-400 font-medium rounded-md">Delete</button>`
+        const {lng, lat} = map.getCenter();
+        const marker = new mapboxgl.Marker({
+                            element: text,
+                            draggable: true
+                        });
+        deleteButton.addEventListener('click',(e)=>{
+            marker.remove()
+            setTimeout(() => {
+                alert('Deleted successfully')
+            }, 300);
+        })
+        marker.setPopup(new mapboxgl.Popup().setDOMContent(deleteButton))
+            .setLngLat([lng, lat])
+            .addTo(map);
+
+        textToAdd.text = '';
+        showTools.value = null;
+        setTimeout(() => {
+            alert("You can drag the element to the preferred location | To delete text click")
+        }, 300);
+    }
+}
+function addIcon(key: string){
+    let marker: Marker;
+    if(key === 'default'){
+         marker = new mapboxgl.Marker({
+                        draggable: true
+                    })
+    }else{
+        let icon = document.createElement('div')
+        icon.innerHTML = `<img src="${icons[key]}" class="w-9 h-9"/>`
+        marker = new mapboxgl.Marker({
+                        element: icon,
+                        draggable: true
+                    })
+    }
+    const {lng, lat} = map.getCenter();
+
+    //set delete button
+    const deleteButton = document.createElement('div')
+    deleteButton.innerHTML = `<button class="bg-red-400 font-medium rounded-md">Delete</button>`
+    deleteButton.addEventListener('click',(e)=>{
+        marker.remove()
+        setTimeout(() => {
+            alert('Deleted successfully')
+        }, 300);
+    })
+    // add to map
+    marker.setPopup(new mapboxgl.Popup().setDOMContent(deleteButton))
+            .setLngLat([lng, lat])
+            .addTo(map);
+
+    showTools.value = null
+    setTimeout(() => {
+        alert("You can drag the element to the preferred location | To delete icon click")
+    }, 300);
 }
 </script>
 <style scoped>
