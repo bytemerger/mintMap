@@ -10,6 +10,7 @@
   "dependencies": {
     "autoprefixer": "^10",
     "core-js": "^3.8.3",
+    "html2canvas": "^1.4.1",
     "mapbox-gl": "^2.8.0",
     "postcss": "^8",
     "tailwindcss": "^3",

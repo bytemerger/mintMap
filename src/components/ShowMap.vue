@@ -1,5 +1,5 @@
 <template>
-    <div class="flex justify-between z-10 relative pointer-events-none">
+    <div class="flex justify-between z-10 relative pointer-events-none" v-if="!loading">
         <div class="ml-7 flex flex-col items-center w-10 pointer-events-auto">
             <div>
                 <button class="border-2 border-gray-600 py-1 px-3 mt-7 hover:bg-red-300 bg-slate-300" @click="emit('exitMap')">Exit</button>
@@ -84,16 +84,22 @@
                         </div> 
                     </div>
                 </div>
-                <!-- <div class="flex flex-col items-end">
+                <div class="mt-20 self-end">
                     <div>
-                        <button class="border-2 border-gray-600 py-1 px-2 hover:bg-red-300 bg-slate-300 text-xs" @click="()=>showLayers = !showLayers">Layers</button>
+                        <button class="border-2 border-gray-600 py-1 px-2 hover:bg-red-300 bg-slate-300 text-xs" @click="exportMap">Export</button>
                     </div>
-                </div> -->
+                </div>
             </div>
         </div>
     </div>
-    <div v-if="mapSize.width" class="absolute z-10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 border border-gray-600 pointer-events-none" :style="{'width': `${mapSize.width}px`, 'height': `${mapSize.height}px`}">
+    <div v-if="(mapSize.width && !loading)" class="absolute z-10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 border border-gray-600 pointer-events-none" :style="{'width': `${mapSize.width}px`, 'height': `${mapSize.height}px`}">
         
+    </div>
+    <!-- show clean ui when exporting -->
+    <div class="fixed top-0 left-0 w-full h-screen bg-black z-20" v-if="loading"></div>
+    <div v-if="loading" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50">
+        <img src="../assets/Settings.gif" />
+        <div class="text-white">Processing the export....</div>
     </div>
     <div id="map" class="top-0 absolute bottom-0 w-full"></div>
 </template>
@@ -101,13 +107,13 @@
 import { onMounted, reactive, watch, watchEffect } from '@vue/runtime-core';
 import { computed, defineEmits, ref } from "vue"
 import mapboxgl,{ LngLatLike, Map, AnyLayer, Layer, Marker } from 'mapbox-gl';
-//import profileSvg from "../assets/icons/basic-home-svgrepo-com.svg";
+import html2canvas from 'html2canvas';
 
 const emit = defineEmits<{
   (e: 'exitMap'): void
 }>()
 
-const loading = ref(true);
+const loading = ref(false);
 let map : Map;
 const layers =  ref<Layer[]>();
 const showTools = ref<'layers'| 'size' | 'addText'| 'addIcon' | null>(null)
@@ -192,7 +198,8 @@ onMounted(()=>{
         container: 'map',
         style: 'mapbox://styles/mapbox/streets-v11', 
         center: [-74.5, 40],
-        zoom: 9 
+        zoom: 9,
+        preserveDrawingBuffer: true
     }); 
     map.on('load', ()=>{
         const mapLayers: any = map.getStyle().layers
@@ -201,7 +208,6 @@ onMounted(()=>{
             layerState[layers.id] = false;
         }
         layers.value = mapLayers;
-        loading.value = false;
     })
 })
 
@@ -280,7 +286,7 @@ const icons: { [key: string]: any } = {
 function addText(){
     if(textToAdd.text !== ""){
         let text = document.createElement('span')
-        text.innerHTML = `<span class="text-xl text-[${textToAdd.size}px]" style="color:${textToAdd.color}">${textToAdd.text}</span>`
+        text.innerHTML = `<span class="text-[${textToAdd.size}px]" style="color:${textToAdd.color}; font-size:${textToAdd.size}px">${textToAdd.text}</span>`
         const deleteButton = document.createElement('div')
         deleteButton.innerHTML = `<button class="bg-red-400 font-medium rounded-md">Delete</button>`
         const {lng, lat} = map.getCenter();
@@ -339,6 +345,51 @@ function addIcon(key: string){
     setTimeout(() => {
         alert("You can drag the element to the preferred location | To delete icon click")
     }, 300);
+}
+function exportCanvasAsPNG(canvasElement: any, fileName: string) {
+    const MIME_TYPE = "image/png";
+
+    const imgURL = canvasElement.toDataURL(MIME_TYPE);
+
+    const dlLink = document.createElement('a');
+    dlLink.download = fileName;
+    dlLink.href = imgURL;
+    dlLink.dataset.downloadurl = [MIME_TYPE, dlLink.download, dlLink.href].join(':');
+
+    document.body.appendChild(dlLink);
+    dlLink.click();
+    document.body.removeChild(dlLink);
+}
+function exportMap(){
+    if(mapSize.width === 0 || mapSize.height === 0){
+        alert('please set the map export size')
+        showTools.value = 'size'
+        return;
+    }
+    let container = map.getContainer();
+    let formerwidth  = window.screen.availWidth;
+    let formerheight = window.screen.availHeight;
+
+    container.style.height = `${mapSize.height}px`
+    container.style.width = `${mapSize.width}px`
+
+    let center = map.getCenter();
+    loading.value = true
+    map.resize()
+
+    map.once('idle',()=>{
+        html2canvas(container).then((element)=>{
+            exportCanvasAsPNG(element, 'newMap')
+            container.style.height = `${formerheight}px`;
+            container.style.width = `${formerwidth}px`;
+            map.resize()
+            map.setCenter(center);
+        }).finally(()=> {
+            setTimeout(()=>{
+                loading.value = false
+            },1000)
+        })
+    })
 }
 </script>
 <style scoped>
